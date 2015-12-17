@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>Dota2</id>
+    <version>0.7.2</version>
+    <authors>paralin</authors>
+    <owners>paralin</owners>
+    <licenseUrl>https://github.com/paralin/Dota2/blob/master/src/Dota2/license.txt</licenseUrl>
+    <projectUrl>https://github.com/paralin/Dota2</projectUrl>
+    <iconUrl>https://raw.github.com/paralin/Dota2/master/Resources/Misc/dota2_logo.jpg</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A plugin for SteamKit that interacts with the DOTA 2 game coordinator.</description>
+    <tags>dota2 steam networking steamkit dota moba</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.5.1">
+        <dependency id="Newtonsoft.Json" version="[7.0.1, 8.0.2]" />
+        <dependency id="SteamKit2" version="[1.6.5, 1.7.0)" />
+      </group>
+      <group targetFramework="Unsupported0.0">
+        <dependency id="Newtonsoft.Json" version="[7.0.1, 8.0.2]" />
+        <dependency id="SteamKit2" version="[1.6.5, 1.7.0)" />
+      </group>
+      <group targetFramework=".NETFramework4.0">
+        <dependency id="Newtonsoft.Json" version="[7.0.1, 8.0.2]" />
+        <dependency id="SteamKit2" version="[1.6.5, 1.7.0)" />
+      </group>
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="mscorlib" targetFramework=".NETFramework4.5.1" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5.1" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5.1" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.5.1" />
+      <frameworkAssembly assemblyName="mscorlib" targetFramework="Unsupported0.0" />
+      <frameworkAssembly assemblyName="System" targetFramework="Unsupported0.0" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework="Unsupported0.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework="Unsupported0.0" />
+      <frameworkAssembly assemblyName="mscorlib" targetFramework=".NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+</package>

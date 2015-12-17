@@ -1,0 +1,16 @@
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamWebApi.Dota.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamWebApi.Dota.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\obj\Debug\SteamWebApi.Dota.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\obj\Debug\SteamWebApi.Dota.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\Dota2.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\Newtonsoft.Json.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\protobuf-net.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamKit2.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamWebApi.Steam.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamWebApi.Steam.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\Dota2.xml
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\Newtonsoft.Json.xml
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\protobuf-net.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\protobuf-net.xml
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\bin\Debug\SteamKit2.xml
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Dota\obj\Debug\SteamWebApi.Dota.csprojResolveAssemblyReference.cache

@@ -1,0 +1,10 @@
+c:\users\developer\documents\visual studio 2013\Projects\SteamWebApi\SteamWebApi.Data\bin\Debug\SteamWebApi.Data.dll
+c:\users\developer\documents\visual studio 2013\Projects\SteamWebApi\SteamWebApi.Data\bin\Debug\SteamWebApi.Data.pdb
+c:\users\developer\documents\visual studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.csprojResolveAssemblyReference.cache
+c:\users\developer\documents\visual studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.dll
+c:\users\developer\documents\visual studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Data\bin\Debug\SteamWebApi.Data.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Data\bin\Debug\SteamWebApi.Data.pdb
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.csprojResolveAssemblyReference.cache
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.dll
+C:\Users\cgraf\Documents\Visual Studio 2013\Projects\SteamWebApi\SteamWebApi.Data\obj\Debug\SteamWebApi.Data.pdb
