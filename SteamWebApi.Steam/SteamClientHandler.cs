@@ -14,6 +14,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using Dota2.GC.Dota.Internal;
 
 namespace SteamWebApi.Steam
 {
@@ -50,7 +51,8 @@ namespace SteamWebApi.Steam
 
 		private static string _username, _password;
 
-		private static Dictionary<string, string[]> _replays = new Dictionary<string,string[]>();
+		private static Dictionary<string, string[]> _replays = new Dictionary<string, string[]>();
+		private static Dictionary<string, CMsgDOTAProfileCard> _profiles = new Dictionary<string, CMsgDOTAProfileCard>();
 
 		#endregion
 
@@ -112,8 +114,21 @@ namespace SteamWebApi.Steam
 			}
 		}
 
+		public Dictionary<string, CMsgDOTAProfileCard> Profiles
+		{
+			get
+			{
+				return _profiles;
+			}
+		}
+
 		#endregion
 
+		#region Client Handler
+
+		/// <summary>
+		/// Constructor (starts connection)
+		/// </summary>
 		public SteamClientHandler()
 		{
 			// Initialize
@@ -139,21 +154,7 @@ namespace SteamWebApi.Steam
 		{
 			if (!_connected && !_connecting && !String.IsNullOrEmpty(_username) && !String.IsNullOrEmpty(_password))
 			{
-				// Register client handlers
-				CallbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
-				CallbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
-
-				// Register user handlers
-				CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
-				CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
-				CallbackManager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
-
-				// Register friend handlers
-				CallbackManager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
-				CallbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
-				CallbackManager.Subscribe<SteamFriends.FriendAddedCallback>(OnFriendAdded);
-
-				CallbackManager.Subscribe<DotaGCHandler.MatchResultResponse>(OnMatchDownload);
+				RegisterCallbacks();
 
 				// Attempt to load previously used servers
                 if (File.Exists("servers.bin"))
@@ -180,13 +181,45 @@ namespace SteamWebApi.Steam
 				Client.Connect();
 				_connecting = true;
 
+				// Register the callback thread
 				Thread callbackThread = new Thread(new ThreadStart(HandleCallbacks));
 				callbackThread.Start();
+
+				// Register the cleanup thread
+				Thread cleanupThread = new Thread(new ThreadStart(ResetLists));
+				cleanupThread.Start();
 
 				WriteServerFile();
 			}
 		}
 
+		/// <summary>
+		/// Registers the callback methods the client hits
+		/// </summary>
+		private void RegisterCallbacks()
+		{
+			// Register client handlers
+			CallbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
+			CallbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
+
+			// Register user handlers
+			CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
+			CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
+			CallbackManager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
+
+			// Register friend handlers
+			CallbackManager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
+			CallbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
+			CallbackManager.Subscribe<SteamFriends.FriendAddedCallback>(OnFriendAdded);
+
+			// Register DOTA handlers
+			CallbackManager.Subscribe<DotaGCHandler.MatchResultResponse>(OnMatchDownload);
+			CallbackManager.Subscribe<DotaGCHandler.ProfileCardResponse>(OnProfileDownload);
+		}
+
+		/// <summary>
+		/// Separated so to handle it in a thread
+		/// </summary>
         private void HandleCallbacks()
         {
 			while(_connected || _connecting)
@@ -205,6 +238,75 @@ namespace SteamWebApi.Steam
 			Thread.Sleep(30000);
 			Connect();
         }
+
+		/// <summary>
+		/// Clears out the profile and replay data on an hourly basis
+		/// </summary>
+		private void ResetLists()
+		{
+			while(true)
+			{
+				Thread.Sleep(3600000);
+				_replays = new Dictionary<string, string[]>();
+				_profiles = new Dictionary<string, CMsgDOTAProfileCard>();
+				_errors = new Dictionary<string, Dictionary<string, string>>();
+			}
+		}
+
+		#region Server File
+
+		/// <summary>
+		/// Reads the list of servers into CMClient
+		/// </summary>
+		private void ReadServerFile()
+		{
+			try
+			{
+				using(var fs = File.OpenRead("servers.bin"))
+				using(var reader = new BinaryReader(fs))
+				{
+					while(fs.Position < fs.Length)
+					{
+						var numAddressBytes = reader.ReadInt32();
+						var addressBytes = reader.ReadBytes(numAddressBytes);
+						var port = reader.ReadInt32();
+						var ipaddress = new IPAddress(addressBytes);
+						var endPoint = new IPEndPoint(ipaddress, port);
+
+						CMClient.Servers.TryAdd(endPoint);
+					}
+				}
+			}
+			catch(Exception)
+			{ }
+		}
+
+		/// <summary>
+		/// Writes the last-used server to a file
+		/// </summary>
+		private void WriteServerFile()
+		{
+			try
+			{
+				using(var fs = File.OpenWrite("servers.bin"))
+				using(var writer = new BinaryWriter(fs))
+				{
+					foreach(var endPoint in CMClient.Servers.GetAllEndPoints())
+					{
+						var addressBytes = endPoint.Address.GetAddressBytes();
+						writer.Write(addressBytes.Length);
+						writer.Write(addressBytes);
+						writer.Write(endPoint.Port);
+					}
+				}
+			}
+			catch(Exception)
+			{ }
+		}
+
+		#endregion
+
+		#endregion
 
         /// <summary>
         /// Get all friends of the current user
@@ -253,58 +355,14 @@ namespace SteamWebApi.Steam
 			Dota.RequestMatchResult(matchId);
 		}
 
-		#region Server File
-
 		/// <summary>
-		/// Reads the list of servers into CMClient
+		/// Send a request to the client for a player's DOTA profile
 		/// </summary>
-		private void ReadServerFile()
+		/// <param name="id">The 64-bit ID of the player</param>
+		public void RequestDotaProfile(uint accountId)
 		{
-			try
-			{
-				using(var fs = File.OpenRead("servers.bin"))
-				using(var reader = new BinaryReader(fs))
-				{
-					while(fs.Position < fs.Length)
-					{
-						var numAddressBytes = reader.ReadInt32();
-						var addressBytes = reader.ReadBytes(numAddressBytes);
-						var port = reader.ReadInt32();
-						var ipaddress = new IPAddress(addressBytes);
-						var endPoint = new IPEndPoint(ipaddress, port);
-
-						CMClient.Servers.TryAdd(endPoint);
-					}
-				}
-			}
-			catch(Exception)
-			{}
+			Dota.RequestProfileCards(accountId);
 		}
-
-		/// <summary>
-		/// Writes the last-used server to a file
-		/// </summary>
-		private void WriteServerFile()
-		{
-			try
-			{
-				using(var fs = File.OpenWrite("servers.bin"))
-				using(var writer = new BinaryWriter(fs))
-				{
-					foreach(var endPoint in CMClient.Servers.GetAllEndPoints())
-					{
-						var addressBytes = endPoint.Address.GetAddressBytes();
-						writer.Write(addressBytes.Length);
-						writer.Write(addressBytes);
-						writer.Write(endPoint.Port);
-					}
-				}
-			}
-			catch(Exception)
-			{ }
-		}
-
-		#endregion
 
 		#region Event handlers
 
@@ -411,6 +469,14 @@ namespace SteamWebApi.Steam
 			replayData[1] = callback.result.match.replay_salt.ToString();
 
 			_replays.Add(callback.result.match.match_id.ToString(), replayData);
+		}
+
+		/// <summary>
+		/// Adds the returning profile data to a dictionary
+		/// </summary>
+		private static void OnProfileDownload(DotaGCHandler.ProfileCardResponse callback)
+		{
+			_profiles.Add(callback.result.account_id.ToString(), callback.result);
 		}
 
 		#endregion

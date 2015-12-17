@@ -22,9 +22,20 @@ namespace SteamWebApi.Web.Messages
 		{
 			get
 			{
-				return new Dictionary<string,string>()
+				return new Dictionary<string, string>()
 				{
 					{"success", "replay has been requested"}
+				};
+			}
+		}
+
+		public static Dictionary<string, string> ProfileRequested
+		{
+			get
+			{
+				return new Dictionary<string, string>()
+				{
+					{"success", "profile has been requested"}
 				};
 			}
 		}

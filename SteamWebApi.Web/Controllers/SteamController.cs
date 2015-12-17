@@ -45,6 +45,24 @@ namespace SteamWebApi.Web.Controllers
 			return message;
 		}
 
+		[System.Web.Http.HttpGet]
+		[Route("friends")]
+		public JObject FriendsList()
+		{
+			JObject message;
+
+			if(Client.Connected)
+			{
+				message = JObject.FromObject(Client.GetFriendsList());
+			}
+			else
+			{
+				message = JObject.FromObject(Messages.Errors.SteamNotConnected);
+			}
+
+			return message;
+		}
+
         [System.Web.Http.HttpGet]
         [Route("dota/connected")]
         public JObject DotaConnected()
@@ -61,15 +79,15 @@ namespace SteamWebApi.Web.Controllers
 			}
 
 			return message;
-        }
+		}
 
 		[System.Web.Http.HttpGet]
-		[Route("dota/replay/{matchId}")]
+		[Route("dota/replays/{matchId}")]
 		public JObject RequestReplayData(ulong matchId)
 		{
 			JObject message;
 
-            if (Client.Connected)
+			if(Client.Connected)
 			{
 				Client.RequestDotaReplay(matchId);
 				message = JObject.FromObject(Messages.Successes.ReplayRequested);
@@ -88,7 +106,7 @@ namespace SteamWebApi.Web.Controllers
 		{
 			JObject message;
 
-            if (Client.Connected)
+			if(Client.Connected)
 			{
 				return JObject.FromObject(Client.Replays);
 			}
@@ -100,22 +118,41 @@ namespace SteamWebApi.Web.Controllers
 			return message;
 		}
 
-        [System.Web.Http.HttpGet]
-        [Route("friends")]
-        public JObject FriendsList()
-        {
-            JObject message;
+		[System.Web.Http.HttpGet]
+		[Route("dota/profiles/{accountId}")]
+		public JObject RequestProfileData(uint accountId)
+		{
+			JObject message;
 
-            if(Client.Connected)
-            {
-                message = JObject.FromObject(Client.GetFriendsList());
-            }
-            else
-            {
-                message = JObject.FromObject(Messages.Errors.SteamNotConnected);
-            }
+			if(Client.Connected)
+			{
+				Client.RequestDotaProfile(accountId);
+				message = JObject.FromObject(Messages.Successes.ProfileRequested);
+			}
+			else
+			{
+				message = JObject.FromObject(Messages.Errors.SteamNotConnected);
+			}
 
-            return message;
-        }
+			return message;
+		}
+
+		[System.Web.Http.HttpGet]
+		[Route("dota/profiles")]
+		public JObject GetProfileList()
+		{
+			JObject message;
+
+			if(Client.Connected)
+			{
+				return JObject.FromObject(Client.Profiles);
+			}
+			else
+			{
+				message = JObject.FromObject(Messages.Errors.SteamNotConnected);
+			}
+
+			return message;
+		}
     }
 }
