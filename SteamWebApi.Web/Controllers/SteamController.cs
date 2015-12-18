@@ -11,13 +11,13 @@ using System.Web.Mvc;
 
 namespace SteamWebApi.Web.Controllers
 {
-    [RoutePrefix("steam")]
+    [System.Web.Http.RoutePrefix("steam")]
     public class SteamController : ApiController
     {
 		private static SteamClientHandler Client = new SteamClientHandler();
 
         [System.Web.Http.HttpGet]
-        [Route("connected")]
+        [System.Web.Http.Route("connected")]
 		public JObject Connected()
 		{
 			JObject message;
@@ -46,7 +46,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
 		[System.Web.Http.HttpGet]
-		[Route("friends")]
+		[System.Web.Http.Route("friends")]
 		public JObject FriendsList()
 		{
 			JObject message;
@@ -64,7 +64,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
         [System.Web.Http.HttpGet]
-        [Route("dota/connected")]
+        [System.Web.Http.Route("dota/connected")]
         public JObject DotaConnected()
         {
 			JObject message;
@@ -82,7 +82,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
 		[System.Web.Http.HttpGet]
-		[Route("dota/replays/{matchId}")]
+		[System.Web.Http.Route("dota/replays/{matchId}")]
 		public JObject RequestReplayData(ulong matchId)
 		{
 			JObject message;
@@ -101,7 +101,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
 		[System.Web.Http.HttpGet]
-		[Route("dota/replays")]
+		[System.Web.Http.Route("dota/replays")]
 		public JObject GetReplayList()
 		{
 			JObject message;
@@ -119,7 +119,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
 		[System.Web.Http.HttpGet]
-		[Route("dota/profiles/{accountId}")]
+		[System.Web.Http.Route("dota/profiles/{accountId}")]
 		public JObject RequestProfileData(uint accountId)
 		{
 			JObject message;
@@ -138,7 +138,7 @@ namespace SteamWebApi.Web.Controllers
 		}
 
 		[System.Web.Http.HttpGet]
-		[Route("dota/profiles")]
+		[System.Web.Http.Route("dota/profiles")]
 		public JObject GetProfileList()
 		{
 			JObject message;

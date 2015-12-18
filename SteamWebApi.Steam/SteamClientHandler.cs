@@ -156,8 +156,12 @@ namespace SteamWebApi.Steam
 			{
 				RegisterCallbacks();
 
+                string directory = "h:\\root\\home\\cgraffrun-001\\www\\api";
+                string serversFilePath = String.Concat(directory, "\\", "servers.txt");
+                string cellIdFilePath = String.Concat(directory, "\\", "cellid.txt");
+
 				// Attempt to load previously used servers
-                if (File.Exists("servers.bin"))
+                if (File.Exists(serversFilePath))
                 {
                     ReadServerFile();
                 }
@@ -165,7 +169,7 @@ namespace SteamWebApi.Steam
                 {
                     int cellid = 0;
 
-                    if (File.Exists("cellid.txt") && int.TryParse(File.ReadAllText("cellid.txt"), out cellid))
+                    if (File.Exists(cellIdFilePath) && int.TryParse(File.ReadAllText(cellIdFilePath), out cellid))
                     {
                         var loadServersTask = SteamDirectory.Initialize(cellid);
                         loadServersTask.Wait();
@@ -176,6 +180,10 @@ namespace SteamWebApi.Steam
                         }
                     }
                 }
+
+                // Write the server file before we try to connect
+                // 12/17 - Disabled for now so we don't overwrite the list of open end points
+                //WriteServerFile();
 
 				// Connect client
 				Client.Connect();
@@ -188,8 +196,6 @@ namespace SteamWebApi.Steam
 				// Register the cleanup thread
 				Thread cleanupThread = new Thread(new ThreadStart(ResetLists));
 				cleanupThread.Start();
-
-				WriteServerFile();
 			}
 		}
 
@@ -262,23 +268,41 @@ namespace SteamWebApi.Steam
 		{
 			try
 			{
-				using(var fs = File.OpenRead("servers.bin"))
-				using(var reader = new BinaryReader(fs))
-				{
-					while(fs.Position < fs.Length)
-					{
-						var numAddressBytes = reader.ReadInt32();
-						var addressBytes = reader.ReadBytes(numAddressBytes);
-						var port = reader.ReadInt32();
-						var ipaddress = new IPAddress(addressBytes);
-						var endPoint = new IPEndPoint(ipaddress, port);
+                string directory = "h:\\root\\home\\cgraffrun-001\\www\\api";
+                string serverFilePath = String.Concat(directory, "\\", "servers.txt");
+                string[] serversArray = File.ReadAllLines(serverFilePath);
 
-						CMClient.Servers.TryAdd(endPoint);
-					}
-				}
+                // Clear the server list so we can add the open end points
+                CMClient.Servers.Clear();
+
+                foreach(string serverAddress in serversArray)
+                {
+                    int colonPosition = serverAddress.IndexOf(':');
+                    string ip = serverAddress.Substring(0, colonPosition);
+                    int port = int.Parse(serverAddress.Substring(colonPosition + 1));
+                    IPAddress ipAddress = IPAddress.Parse(ip);
+                    IPEndPoint endPoint = new IPEndPoint(ipAddress, port);
+                    CMClient.Servers.TryAdd(endPoint);
+                }
+
+                Dictionary<string, string> buffer = new Dictionary<string, string>();
+
+                buffer.Add("category", "ServerFileRead");
+                buffer.Add("message", String.Format("Server file read from {0}", serverFilePath));
+                buffer.Add("datetime", DateTime.Now.ToString());
+
+                _errors.Add(_errors.Count.ToString(), buffer);
 			}
-			catch(Exception)
-			{ }
+			catch(Exception e)
+            {
+                Dictionary<string, string> buffer = new Dictionary<string, string>();
+
+                buffer.Add("category", "ServerFileSaveError");
+                buffer.Add("message", e.ToString());
+                buffer.Add("datetime", DateTime.Now.ToString());
+
+                _errors.Add(_errors.Count.ToString(), buffer);
+            }
 		}
 
 		/// <summary>
@@ -288,20 +312,34 @@ namespace SteamWebApi.Steam
 		{
 			try
 			{
-				using(var fs = File.OpenWrite("servers.bin"))
-				using(var writer = new BinaryWriter(fs))
-				{
-					foreach(var endPoint in CMClient.Servers.GetAllEndPoints())
-					{
-						var addressBytes = endPoint.Address.GetAddressBytes();
-						writer.Write(addressBytes.Length);
-						writer.Write(addressBytes);
-						writer.Write(endPoint.Port);
-					}
-				}
+                string directory = "h:\\root\\home\\cgraffrun-001\\www\\api";
+                string newFilePath = String.Concat(directory, "\\", "servers.txt");
+                using(StreamWriter file = new StreamWriter(newFilePath))
+                {
+                    foreach (var endPoint in CMClient.Servers.GetAllEndPoints())
+                    {
+                        file.WriteLine(String.Format("{0}:{1}", endPoint.Address.ToString(), endPoint.Port.ToString()));
+                    }
+                }
+
+                Dictionary<string, string> buffer = new Dictionary<string, string>();
+
+                buffer.Add("category", "ServerFileSaved");
+                buffer.Add("message", String.Format("New server file saved at {0}", newFilePath));
+                buffer.Add("datetime", DateTime.Now.ToString());
+
+                _errors.Add(_errors.Count.ToString(), buffer);
 			}
-			catch(Exception)
-			{ }
+			catch(Exception e)
+            {
+                Dictionary<string, string> buffer = new Dictionary<string, string>();
+
+                buffer.Add("category", "ServerFileSaveError");
+                buffer.Add("message", e.ToString());
+                buffer.Add("datetime", DateTime.Now.ToString());
+
+                _errors.Add(_errors.Count.ToString(), buffer);
+            }
 		}
 
 		#endregion
@@ -407,8 +445,10 @@ namespace SteamWebApi.Steam
 				_connected = false;
 			}
 			else
-			{
-				File.WriteAllText("cellid.txt", callback.CellID.ToString());
+            {
+                string directory = "h:\\root\\home\\cgraffrun-001\\www\\api";
+                string cellIdFilePath = String.Concat(directory, "\\", "cellid.txt");
+                File.WriteAllText(cellIdFilePath, callback.CellID.ToString());
                 Dota.Start();
 			}
 		}
