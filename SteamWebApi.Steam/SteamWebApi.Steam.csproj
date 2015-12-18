@@ -52,6 +52,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Messages\Errors.cs" />
+    <Compile Include="Messages\Info.cs" />
+    <Compile Include="Messages\Successes.cs" />
     <Compile Include="SteamClientHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

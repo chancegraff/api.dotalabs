@@ -15,6 +15,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Dota2.GC.Dota.Internal;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SteamWebApi.Steam
 {
@@ -46,7 +48,8 @@ namespace SteamWebApi.Steam
 		private static SteamFriends Friends;
         private static DotaGCHandler Dota;
 		
-		private static bool _connected, _connecting;
+		private static bool _connected = false, _connecting = false;
+
 		private static Dictionary<string, Dictionary<string, string>> _errors = new Dictionary<string, Dictionary<string, string>>();
 
 		private static string _username, _password;
@@ -134,16 +137,17 @@ namespace SteamWebApi.Steam
 			// Initialize
 			Client = new SteamClient(ProtocolType.Tcp);
             CallbackManager = new CallbackManager(Client);
-            DotaGCHandler.Bootstrap(Client);
 			User = Client.GetHandler<SteamUser>();
-            Friends = Client.GetHandler<SteamFriends>();
-            Dota = Client.GetHandler<DotaGCHandler>();
+			Friends = Client.GetHandler<SteamFriends>();
+
+			DotaGCHandler.Bootstrap(Client);
+			Dota = Client.GetHandler<DotaGCHandler>();
+
 			DebugLog.AddListener(new DebugListener());
 			DebugLog.Enabled = true;
 
             _username = "dotalabsbot";
             _password = "Cooldogbro1";
-            Connect();
 		}
 
 		/// <summary>
@@ -152,8 +156,10 @@ namespace SteamWebApi.Steam
 		/// <returns>True if it connected, otherwise false</returns>
 		public void Connect()
 		{
-			if (!_connected && !_connecting && !String.IsNullOrEmpty(_username) && !String.IsNullOrEmpty(_password))
+			if (!_connected && !_connecting)
 			{
+				_errors = new Dictionary<string,Dictionary<string,string>>();
+
 				RegisterCallbacks();
 
                 string directory = "h:\\root\\home\\cgraffrun-001\\www\\api";
@@ -173,17 +179,8 @@ namespace SteamWebApi.Steam
                     {
                         var loadServersTask = SteamDirectory.Initialize(cellid);
                         loadServersTask.Wait();
-
-                        if (loadServersTask.IsFaulted)
-                        {
-                            throw new Exception("Failed to load server list.");
-                        }
                     }
                 }
-
-                // Write the server file before we try to connect
-                // 12/17 - Disabled for now so we don't overwrite the list of open end points
-                //WriteServerFile();
 
 				// Connect client
 				Client.Connect();
@@ -193,9 +190,10 @@ namespace SteamWebApi.Steam
 				Thread callbackThread = new Thread(new ThreadStart(HandleCallbacks));
 				callbackThread.Start();
 
-				// Register the cleanup thread
-				Thread cleanupThread = new Thread(new ThreadStart(ResetLists));
-				cleanupThread.Start();
+				while(_connecting && !_connected)
+				{
+					// Wait til the attempt's been made
+				}
 			}
 		}
 
@@ -232,32 +230,7 @@ namespace SteamWebApi.Steam
             {
                 CallbackManager.RunWaitCallbacks(TimeSpan.FromSeconds(1));
             }
-
-			// Add a message to the log for the disconnection
-			Dictionary<string, string> buffer = new Dictionary<string,string>();
-			buffer.Add("category", "RetryConnection");
-			buffer.Add("message", "Disconnected from Steam. Attempting to reconnect in 30 seconds.");
-			buffer.Add("datetime", DateTime.Now.ToString());
-			_errors.Add(_errors.Count.ToString(), buffer);
-
-			// Wait 30 seconds and try again
-			Thread.Sleep(30000);
-			Connect();
         }
-
-		/// <summary>
-		/// Clears out the profile and replay data on an hourly basis
-		/// </summary>
-		private void ResetLists()
-		{
-			while(true)
-			{
-				Thread.Sleep(3600000);
-				_replays = new Dictionary<string, string[]>();
-				_profiles = new Dictionary<string, CMsgDOTAProfileCard>();
-				_errors = new Dictionary<string, Dictionary<string, string>>();
-			}
-		}
 
 		#region Server File
 
@@ -284,24 +257,9 @@ namespace SteamWebApi.Steam
                     IPEndPoint endPoint = new IPEndPoint(ipAddress, port);
                     CMClient.Servers.TryAdd(endPoint);
                 }
-
-                Dictionary<string, string> buffer = new Dictionary<string, string>();
-
-                buffer.Add("category", "ServerFileRead");
-                buffer.Add("message", String.Format("Server file read from {0}", serverFilePath));
-                buffer.Add("datetime", DateTime.Now.ToString());
-
-                _errors.Add(_errors.Count.ToString(), buffer);
 			}
-			catch(Exception e)
+			catch(Exception)
             {
-                Dictionary<string, string> buffer = new Dictionary<string, string>();
-
-                buffer.Add("category", "ServerFileSaveError");
-                buffer.Add("message", e.ToString());
-                buffer.Add("datetime", DateTime.Now.ToString());
-
-                _errors.Add(_errors.Count.ToString(), buffer);
             }
 		}
 
@@ -321,24 +279,9 @@ namespace SteamWebApi.Steam
                         file.WriteLine(String.Format("{0}:{1}", endPoint.Address.ToString(), endPoint.Port.ToString()));
                     }
                 }
-
-                Dictionary<string, string> buffer = new Dictionary<string, string>();
-
-                buffer.Add("category", "ServerFileSaved");
-                buffer.Add("message", String.Format("New server file saved at {0}", newFilePath));
-                buffer.Add("datetime", DateTime.Now.ToString());
-
-                _errors.Add(_errors.Count.ToString(), buffer);
 			}
-			catch(Exception e)
+			catch(Exception)
             {
-                Dictionary<string, string> buffer = new Dictionary<string, string>();
-
-                buffer.Add("category", "ServerFileSaveError");
-                buffer.Add("message", e.ToString());
-                buffer.Add("datetime", DateTime.Now.ToString());
-
-                _errors.Add(_errors.Count.ToString(), buffer);
             }
 		}
 
@@ -346,11 +289,13 @@ namespace SteamWebApi.Steam
 
 		#endregion
 
+		#region Public Methods
+
         /// <summary>
         /// Get all friends of the current user
         /// </summary>
         /// <returns>A JSON-convertable dictionary with friend IDs</returns>
-        public Dictionary<string, SteamID> GetFriendsList()
+        public JObject GetFriendsList()
         {
             Dictionary<string, SteamID> friendsList = new Dictionary<string, SteamID>();
             int friendCount = Friends.GetFriendCount();
@@ -361,14 +306,45 @@ namespace SteamWebApi.Steam
                 friendsList.Add(steamIdFriend.AccountID.ToString(), steamIdFriend);
             }
 
-            return friendsList;
+            return JObject.FromObject(new Dictionary<int, Dictionary<string, SteamID>>
+			{
+				{friendsList.Count, friendsList}
+			});
         }
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <returns></returns>
-        public Dictionary<string, string> CheckDotaConnection()
+		public JObject CheckSteamConnection()
+		{
+			JObject message;
+
+			if(_connecting && !_connected)
+			{
+				message = JObject.FromObject(Messages.Info.SteamConnecting);
+			}
+			else if(_connected && !_connecting)
+			{
+				message = JObject.FromObject(Messages.Successes.SteamConnected);
+			}
+			else if(_errors.Count > 0)
+			{
+				message = JObject.FromObject(_errors);
+			}
+			else
+			{
+				message = JObject.FromObject(Messages.Errors.SteamConnectionFailed);
+			}
+
+			return message;
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+        public JObject CheckDotaConnection()
         {
             Dictionary<string, string> returnMessage = new Dictionary<string, string>();
 
@@ -381,7 +357,7 @@ namespace SteamWebApi.Steam
                 returnMessage.Add("error", "game coordinator is not connected");
             }
 
-            return returnMessage;
+            return JObject.FromObject(returnMessage);
         }
 
 		/// <summary>
@@ -402,6 +378,8 @@ namespace SteamWebApi.Steam
 			Dota.RequestProfileCards(accountId);
 		}
 
+		#endregion
+
 		#region Event handlers
 
 		/// <summary>
@@ -409,6 +387,8 @@ namespace SteamWebApi.Steam
 		/// </summary>
 		private static void OnConnected(SteamClient.ConnectedCallback callback)
 		{
+			_connecting = false;
+
 			if(callback.Result != EResult.OK)
 			{
 				_connected = false;
@@ -416,7 +396,6 @@ namespace SteamWebApi.Steam
 			else
 			{
 				_connected = true;
-				_connecting = false;
 				User.LogOn(new SteamUser.LogOnDetails
 				{
 					Username = _username,
@@ -432,6 +411,8 @@ namespace SteamWebApi.Steam
 		{
 			_connected = false;
 			_connecting = false;
+
+			Thread.Sleep(30000);
 		}
 
 		/// <summary>

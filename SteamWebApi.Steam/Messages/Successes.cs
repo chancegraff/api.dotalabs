@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace SteamWebApi.Web.Messages
+namespace SteamWebApi.Steam.Messages
 {
 	public class Successes
 	{
@@ -13,7 +13,7 @@ namespace SteamWebApi.Web.Messages
 			{
 				return new Dictionary<string, string>()
 				{
-					{"success", "now connected to steam!"}
+					{"success", "connected to steam"}
 				};
 			}
 		}
